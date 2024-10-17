@@ -1,10 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email</title>
+    <!-- CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+        }
+        nav a {
+            color: #fff;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+        }
+        form div {
+            margin-bottom: 10px;
+        }
+        form label {
+            display: block;
+            margin-bottom: 5px;
+            color: #007bff;
+        }
+        form input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        form button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        form button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-$END$
+    <header>
+        <div class="container">
+            <h1>Verify Email</h1>
+            <nav>
+                <a href="{{ url_for('index') }}">Home</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('register') }}">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        <h2>Verify Your Email</h2>
+        <form action="{{ url_for('verify_email') }}" method="POST">
+            <div>
+                <label for="code">Verification Code</label>
+                <input type="text" id="code" name="code" required>
+            </div>
+            <button type="submit">Verify</button>
+        </form>
+    </div>
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Verification page loaded');
+            // Add any JavaScript you need here
+        });
+    </script>
 </body>
 </html>

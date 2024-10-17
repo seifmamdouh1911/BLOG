@@ -1,10 +1,290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Blog</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px 0;
+            text-align: center;
+        }
+        nav a {
+            color: #fff;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+        }
+        .post {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .post h2 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .post img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .like-comment-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .like-comment-section button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        .like-comment-section button:hover {
+            background-color: #0056b3;
+        }
+        .like-count {
+            margin-left: 10px;
+        }
+        .comment-box {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            display: none; /* Hide by default */
+        }
+        .comment-box textarea {
+            width: calc(100% - 22px);
+            height: 80px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            resize: none;
+        }
+        .comment-box button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .comment-box button:hover {
+            background-color: #218838;
+        }
+        .comments-list {
+            margin-top: 10px;
+        }
+        .comment {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .comment p {
+            margin: 0;
+        }
+        .comment .like-count {
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
-$END$
+    <header>
+        <div class="container">
+            <h1>Welcome to the Blog</h1>
+            <nav>
+                <a href="{{ url_for('index') }}">Home</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('create_post') }}">Create New Post</a>
+                    <a href="{{ url_for('settings') }}">Settings</a>
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('register') }}">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        <h2>Posts</h2>
+        {% for post in posts %}
+            <div class="post" data-post-id="{{ post.id }}">
+                <h2>{{ post.title }}</h2>
+                <p>{{ post.content }}</p>
+                {% if post.image_url %}
+                    <img src="{{ post.image_url }}" alt="Post Image">
+                {% endif %}
+                <div class="like-comment-section">
+                    <button class="like-button">
+                        {% set liked = false %}
+                        {% for like in post.likes %}
+                            {% if like.user_id == current_user.id %}
+                                {% set liked = true %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if liked %}
+                            Unlike
+                        {% else %}
+                            Like
+                        {% endif %}
+                        <span class="like-count"> ({{ post.get_like_count() }})</span>
+                    </button>
+                    <button class="toggle-comments">Show Comments ({{ post.comments|length }})</button>
+                </div>
+                <div class="comment-box">
+                    <textarea placeholder="Add a comment..."></textarea>
+                    <button class="add-comment">Add Comment</button>
+                    <div class="comments-list">
+                        {% for comment in post.comments %}
+                            <div class="comment" data-comment-id="{{ comment.id }}">
+                                <p><strong>{{ comment.author.email }}:</strong> {{ comment.content }}</p>
+                                <div class="like-comment-section">
+                                    <button class="like-comment-button">
+                                        {% set liked = false %}
+                                        {% for like in comment.likes %}
+                                            {% if like.user_id == current_user.id %}
+                                                {% set liked = true %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if liked %}
+                                            Unlike
+                                        {% else %}
+                                            Like
+                                        {% endif %}
+                                        <span class="like-count"> ({{ comment.get_like_count() }})</span>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle like button click for posts
+            document.querySelectorAll('.like-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const postId = this.closest('.post').getAttribute('data-post-id');
+                    const likeCountSpan = this.querySelector('.like-count');
+                    const isLiked = this.textContent.trim() === 'Unlike';
+
+                    fetch(`/like_post/${postId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `like=${isLiked ? 'false' : 'true'}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.textContent = isLiked ? 'Like' : 'Unlike';
+                            likeCountSpan.textContent = `(${data.new_like_count})`;
+                        } else {
+                            alert('Failed to update like.');
+                        }
+                    });
+                });
+            });
+
+            // Handle toggle comments button click
+            document.querySelectorAll('.toggle-comments').forEach(button => {
+                button.addEventListener('click', function() {
+                    const commentBox = this.closest('.post').querySelector('.comment-box');
+                    const isVisible = commentBox.style.display === 'block';
+                    commentBox.style.display = isVisible ? 'none' : 'block';
+                    this.textContent = isVisible
+                        ? `Show Comments (${this.closest('.post').querySelectorAll('.comment').length})`
+                        : `Hide Comments (${this.closest('.post').querySelectorAll('.comment').length})`;
+                });
+            });
+
+            // Handle add comment button click
+            document.querySelectorAll('.add-comment').forEach(button => {
+                button.addEventListener('click', function() {
+                    const postId = this.closest('.post').getAttribute('data-post-id');
+                    const textarea = this.previousElementSibling;
+                    const commentContent = textarea.value.trim();
+
+                    if (commentContent) {
+                        fetch(`/add_comment/${postId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: `content=${encodeURIComponent(commentContent)}`
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                textarea.value = '';
+                                const commentsList = this.closest('.comment-box').querySelector('.comments-list');
+                                commentsList.innerHTML += `<div class="comment" data-comment-id="${data.comment_id}"><p><strong>${data.username}:</strong> ${commentContent}</p><div class="like-comment-section"><button class="like-comment-button">Like<span class="like-count"> (0)</span></button></div></div>`;
+                            } else {
+                                alert('Failed to add comment.');
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Handle like button click for comments
+            document.querySelectorAll('.like-comment-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const commentId = this.closest('.comment').getAttribute('data-comment-id');
+                    const likeCountSpan = this.querySelector('.like-count');
+                    const isLiked = this.textContent.trim() === 'Unlike';
+
+                    fetch(`/like_comment/${commentId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `like=${isLiked ? 'false' : 'true'}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.textContent = isLiked ? 'Like' : 'Unlike';
+                            likeCountSpan.textContent = `(${data.new_like_count})`;
+                        } else {
+                            alert('Failed to update like.');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </body>
 </html>

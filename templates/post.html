@@ -1,10 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ post.title }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+        }
+
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        nav a {
+            color: #fff;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+
+        .post {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .post h2 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .post img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+
+        .comment {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .comment p {
+            margin: 0;
+        }
+
+        .comment form {
+            margin-top: 10px;
+        }
+
+        /* JavaScript section */
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Page loaded');
+                // Add any JavaScript you need here
+            });
+        </script>
+    </style>
 </head>
 <body>
-$END$
+    <header>
+        <div class="container">
+            <h1>{{ post.title }}</h1>
+            <nav>
+                <a href="{{ url_for('index') }}">Home</a>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('register') }}">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        <div class="post">
+            <h2>{{ post.title }}</h2>
+            <p>{{ post.content }}</p>
+            {% if post.image_url %}
+                <img src="{{ post.image_url }}" alt="Post Image">
+            {% endif %}
+            <form action="{{ url_for('like_post', post_id=post.id) }}" method="POST">
+                <button type="submit">
+                    {% set liked = false %}
+                    {% for like in post.likes %}
+                        {% if like.user_id == current_user.id %}
+                            {% set liked = true %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if liked %}
+                        Unlike
+                    {% else %}
+                        Like
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+        <h3>Comments</h3>
+        {% for comment in comments %}
+            <div class="comment">
+                <p><strong>{{ comment.author.email }}:</strong> {{ comment.content }}</p>
+            </div>
+        {% endfor %}
+        <div class="comment">
+            <h3>Add a Comment</h3>
+            <form action="{{ url_for('post', post_id=post.id) }}" method="POST">
+                <textarea name="content" rows="4" placeholder="Write your comment here..." required></textarea>
+                <button type="submit">Submit Comment</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
